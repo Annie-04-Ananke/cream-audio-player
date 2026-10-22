@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cream Audio Player</title>
+<style>
+:root{--bg:transparent;--cream:#f5ecdf;--ink:#5c5145;--muted:#9b8a77;--line:#e8dccb;--accent:#b99b78;--paper:#fffaf2;--record:#292724}
+body[data-theme="rose"]{--bg:transparent;--cream:#f6e5e4;--ink:#735552;--muted:#a78380;--line:#ead2d0;--accent:#c58f91;--paper:#fff8f7;--record:#302526}
+body[data-theme="sage"]{--cream:#e8eee4;--ink:#4e5d4d;--muted:#84937e;--line:#d5dfd0;--accent:#829a7a;--paper:#f9fcf7;--record:#242a25}
+body[data-theme="lavender"]{--cream:#ece8f5;--ink:#5b536e;--muted:#968baa;--line:#ded6ed;--accent:#a395c5;--paper:#fbf9ff;--record:#282531}
+body[data-theme="night"]{--cream:#40372f;--ink:#f3e7d8;--muted:#b8a38c;--line:#51463b;--accent:#d2ad7c;--paper:#29231f;--record:#111110}
+*{box-sizing:border-box}html,body{margin:0;background:transparent;color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}
+.wrap{width:100%;max-width:340px;margin:0 auto;padding:2px}.card{position:relative;background:transparent;border:0;border-radius:0;padding:3px;box-shadow:none;min-height:0}
+.head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px}.tag{font-size:10px;letter-spacing:.12em;color:var(--muted)}.mode{border:0;border-radius:99px;background:var(--cream);padding:6px 9px;color:var(--ink);font-size:11px;cursor:pointer}
+.info{display:flex;align-items:center;gap:13px}.cover{width:48px;height:48px;flex:0 0 48px;border-radius:50%;background:transparent;display:grid;place-items:center;position:relative}.mini-disc{width:42px;height:42px;border-radius:50%;background:repeating-radial-gradient(circle,var(--record) 0 2px,#45413b 3px 4px);position:relative}.mini-disc:after{content:"";position:absolute;inset:15px;border-radius:50%;background:#d4b58d;border:2px solid #f5e7d3}.cover.spin .mini-disc{animation:spin 3s linear infinite}
+.meta{min-width:0;flex:1}.title{font-size:15px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.artist{font-size:12px;color:var(--muted);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.controls{display:flex;align-items:center;gap:7px;margin-top:7px}.play{border:0;border-radius:50%;width:32px;height:32px;background:var(--ink);color:#fff;cursor:pointer;flex-shrink:0}.loop{border:0;border-radius:50%;width:28px;height:28px;background:var(--cream);color:var(--ink);cursor:pointer}.loop.on{background:#e5d2b8}.timeline{flex:1;min-width:0}input[type=range]{width:100%;accent-color:var(--accent);height:4px;margin:0}.times{display:flex;justify-content:space-between;color:var(--muted);font-size:10px}
+.list{border-top:1px solid var(--line);margin-top:7px;padding-top:3px}.track{display:flex;gap:9px;align-items:center;padding:8px 6px;border-radius:10px;cursor:pointer}.track.active,.track:hover{background:#f5ecdf}.num{font-size:11px;color:var(--muted);width:18px;text-align:center}.tracktext{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tracktext small{display:block;font-size:10px;color:var(--muted)}.trackmark{color:var(--muted)}
+.vinylmode .head{display:none}.vinylstage{display:flex;justify-content:center;align-items:center;padding:3px 0 6px;position:relative;min-height:112px}.vinyl{width:104px;height:104px;max-width:104px;max-height:104px;min-width:104px;min-height:104px;border-radius:50%;background:repeating-radial-gradient(circle,var(--record) 0 1px,#3d3934 2px 3px,#211f1c 4px 5px);box-shadow:0 3px 8px #30261d35,inset 0 0 0 1px #ffffff18;position:relative;cursor:pointer;animation:spin 3.2s linear infinite;animation-play-state:paused}.vinyl:before{content:"";position:absolute;inset:37%;border-radius:50%;background:radial-gradient(circle,#f8ead6 0 2px,#c6a47e 3px 13px,#e9d4b8 14px 100%);border:1px solid #b7956f}.vinyl:after{content:"";position:absolute;inset:9px;border-radius:50%;border:1px solid #ffffff17}
+.stylus{position:absolute;z-index:3;width:49px;height:7px;right:calc(50% - 65px);top:12px;transform:rotate(27deg);transform-origin:85% 50%;transition:transform .25s ease;pointer-events:none}
+.stylus:before{content:"";position:absolute;right:0;top:-5px;width:15px;height:15px;border-radius:50%;background:linear-gradient(135deg,#d8c3a2,#75634f);box-shadow:0 1px 3px #0004;border:1px solid #f1e1c9}
+.stylus:after{content:"";position:absolute;left:0;top:2px;width:39px;height:3px;border-radius:5px;background:linear-gradient(#e6d4b7,#8b765d);box-shadow:0 1px 2px #0003}
+.vinylmode:not(.playing) .stylus{transform:rotate(12deg)}
+.vinylmode.playing .stylus{transform:rotate(31deg)}
+.vinyl.playing{animation-play-state:running}.hint{text-align:center;color:var(--muted);font-size:10px;margin-bottom:4px}
+.wavestage{display:flex;align-items:center;justify-content:center;min-height:74px;padding:7px 0 4px;cursor:pointer}.wave{display:flex;align-items:center;justify-content:center;gap:3px;height:48px;width:100%;max-width:230px}.wave i{display:block;width:3px;height:var(--h);border-radius:8px;background:var(--accent);opacity:.9;transform-origin:center;animation:wave 900ms ease-in-out infinite alternate;animation-play-state:paused}.wavemode.playing .wave i{animation-play-state:running}.wave i:nth-child(3n){animation-delay:-350ms}.wave i:nth-child(4n){animation-delay:-600ms}.wave i:nth-child(2n){animation-delay:-180ms}
+@keyframes wave{from{transform:scaleY(.38);opacity:.55}to{transform:scaleY(1);opacity:1}}.details{display:none}.details.show{display:block}.vinylmode .info{display:none}.vinylmode .details.show .info{display:flex;margin-top:7px}.vinylmode .details.show .controls{margin-top:10px}.vinylmode .details.show .list{margin-top:10px}
+@keyframes spin{to{transform:rotate(360deg)}}@media(max-width:300px){.card{padding:10px}.cover{width:58px;height:58px;flex-basis:58px}.mini-disc{width:43px;height:43px}.mini-disc:after{inset:15px}}
+</style></head>
+<body><div class="wrap"><main class="card" id="card">
+<div class="head"><div class="tag">CREAM · AUDIO</div><button class="mode" id="mode" type="button">切换模板</button></div>
+<div class="vinylstage" id="vinylstage" hidden><div class="vinyl" id="vinyl" role="button" tabindex="0" aria-label="点击显示歌曲信息"></div><div class="stylus" id="stylus"></div></div>
+<div class="hint" id="hint" hidden>轻触黑胶，查看歌曲信息与播放模式</div>
+<div class="wavestage" id="wavestage" hidden><div class="wave" id="wave" role="button" tabindex="0" aria-label="点击播放或暂停"></div></div>
+<div class="info"><div class="cover" id="cover"><div class="mini-disc"></div></div><div class="meta"><div class="title" id="title">午后慢慢听</div><div class="artist" id="artist">Cream Audio Player</div></div></div>
+<section class="details" id="details">
+<div class="controls"><button class="play" id="play" aria-label="播放">▶</button><div class="timeline"><input id="seek" type="range" min="0" max="100" value="0" aria-label="播放进度"><div class="times"><span id="current">0:00</span><span id="duration">0:00</span></div></div><button class="loop on" id="loop" title="单曲循环开关">↻</button></div>
+<div class="list" id="list"></div>
+</section>
+</main></div><audio id="audio" preload="metadata"></audio>
+<script>
+(()=>{const $=id=>document.getElementById(id),audio=$('audio');let cfg={style:'cream',mode:'single',loop:true,songs:[]},idx=0,loop=true,expanded=false;
+function decode(){try{const raw=new URLSearchParams(location.search).get('data');if(raw){let s=raw.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';cfg=JSON.parse(decodeURIComponent(escape(atob(s))))}}catch(e){}}
+const fmt=n=>Number.isFinite(n)&&n>=0?Math.floor(n/60)+':'+String(Math.floor(n%60)).padStart(2,'0'):'0:00';
+function setStyle(){let vinyl=cfg.style==='vinyl';$('card').classList.toggle('vinylmode',vinyl);$('vinylstage').hidden=!vinyl;$('hint').hidden=!vinyl;$('cover').style.display=vinyl?'none':'grid';$('mode').textContent=vinyl?'黑胶款':'简约款';if(vinyl){$('details').classList.toggle('show',expanded)}else $('details').classList.add('show')}
+function render(){let s=cfg.songs[idx]||{};$('title').textContent=s.title||'未命名歌曲';$('artist').textContent=s.artist||'未知作者';$('play').textContent=audio.paused?'▶':'Ⅱ';$('cover').classList.toggle('spin',!audio.paused);$('vinyl').classList.toggle('playing',!audio.paused);$('card').classList.toggle('playing',!audio.paused);$('wave').innerHTML='';for(let i=0;i<35;i++){let bar=document.createElement('i');bar.style.setProperty('--h',(8+Math.abs(Math.sin(i*1.71))*37)+'px');$('wave').appendChild(bar)}$('loop').classList.toggle('on',loop);$('loop').title=loop?'单曲循环：开启':'单曲循环：关闭';$('list').innerHTML='';
+if(cfg.mode==='playlist'){cfg.songs.forEach((song,i)=>{let row=document.createElement('div');row.className='track'+(i===idx?' active':'');let num=document.createElement('span');num.className='num';num.textContent=String(i+1).padStart(2,'0');let text=document.createElement('span');text.className='tracktext';text.textContent=song.title||'未命名歌曲';let small=document.createElement('small');small.textContent=song.artist||'';text.appendChild(small);let mark=document.createElement('span');mark.className='trackmark';mark.textContent=i===idx?'♪':'·';row.append(num,text,mark);row.onclick=()=>load(i,true);$('list').appendChild(row)})}
+setStyle();syncTime()}
+function syncTime(){let d=audio.duration||0,c=audio.currentTime||0;$('seek').value=d?c/d*100:0;$('current').textContent=fmt(c);$('duration').textContent=fmt(d)}
+function load(i,play){if(!cfg.songs.length)return;idx=(i+cfg.songs.length)%cfg.songs.length;audio.src=cfg.songs[idx].url;audio.loop=loop;render();if(play)audio.play().catch(()=>{})}
+function toggle(){if(!cfg.songs.length)return;if(audio.paused)audio.play().catch(()=>{});else audio.pause()}
+decode();loop=cfg.loop!==false;
+cfg.songs=(Array.isArray(cfg.songs)?cfg.songs:[]).filter(s=>s&&/^https?:/i.test(s.url||''));
+if(cfg.style!=='vinyl')cfg.style='cream';if(cfg.mode!=='playlist')cfg.mode='single';
+$('mode').onclick=()=>{cfg.style=cfg.style==='cream'?'vinyl':'cream';render()};
+$('vinyl').onclick=()=>{expanded=!expanded;render()};$('vinyl').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('vinyl').click()}};$('wave').onclick=()=>{if(cfg.style==='wave'&&cfg.mode==='single')toggle();else{expanded=!expanded;render()}};
+$('play').onclick=toggle;$('loop').onclick=()=>{loop=!loop;audio.loop=loop;render()};$('seek').oninput=e=>{if(audio.duration)audio.currentTime=+e.target.value/100*audio.duration};
+audio.addEventListener('play',render);audio.addEventListener('pause',render);audio.addEventListener('timeupdate',syncTime);audio.addEventListener('loadedmetadata',syncTime);audio.addEventListener('ended',()=>{if(loop){audio.currentTime=0;audio.play().catch(()=>{})}else if(idx<cfg.songs.length-1)load(idx+1,true)});
+if(cfg.songs.length)load(0,false);else render();
+})();
+</script></body></html>
