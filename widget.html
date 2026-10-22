@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cream Audio Player</title>
+<style>
+:root{--bg:#fffaf2;--cream:#f5ecdf;--ink:#5c5145;--muted:#9b8a77;--line:#e8dccb;--accent:#b99b78}
+*{box-sizing:border-box}html,body{margin:0;background:transparent;color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}
+.wrap{width:100%;max-width:460px;margin:0 auto;padding:4px}.card{background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:15px;box-shadow:0 8px 25px #4c3a2510}
+.head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}.tag{font-size:10px;letter-spacing:.12em;color:var(--muted)}.mode{border:0;border-radius:99px;background:var(--cream);padding:6px 9px;color:var(--ink);font-size:11px;cursor:pointer}
+.info{display:flex;align-items:center;gap:13px}.cover{width:74px;height:74px;flex:0 0 74px;border-radius:15px;background:linear-gradient(140deg,#e8d4b9,#fbf1e3);display:grid;place-items:center;position:relative}.mini-disc{width:53px;height:53px;border-radius:50%;background:repeating-radial-gradient(circle,#292724 0 2px,#45413b 3px 4px);position:relative}.mini-disc:after{content:"";position:absolute;inset:19px;border-radius:50%;background:#d4b58d;border:2px solid #f5e7d3}.cover.spin .mini-disc{animation:spin 3s linear infinite}
+.meta{min-width:0;flex:1}.title{font-size:15px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.artist{font-size:12px;color:var(--muted);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.controls{display:flex;align-items:center;gap:9px;margin-top:13px}.play{border:0;border-radius:50%;width:38px;height:38px;background:var(--ink);color:#fff;cursor:pointer;flex-shrink:0}.loop{border:0;border-radius:50%;width:32px;height:32px;background:var(--cream);color:var(--ink);cursor:pointer}.loop.on{background:#e5d2b8}.timeline{flex:1;min-width:0}input[type=range]{width:100%;accent-color:var(--accent);height:4px;margin:0}.times{display:flex;justify-content:space-between;color:var(--muted);font-size:10px}
+.list{border-top:1px solid var(--line);margin-top:12px;padding-top:6px}.track{display:flex;gap:9px;align-items:center;padding:8px 6px;border-radius:10px;cursor:pointer}.track.active,.track:hover{background:#f5ecdf}.num{font-size:11px;color:var(--muted);width:18px;text-align:center}.tracktext{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tracktext small{display:block;font-size:10px;color:var(--muted)}.trackmark{color:var(--muted)}
+.vinylmode .head{justify-content:center}.vinylmode .tag{display:none}.vinylmode .mode{position:absolute;right:17px;top:17px}.vinylstage{display:flex;justify-content:center;padding:10px 0 14px}.vinyl{width:min(60vw,190px);height:min(60vw,190px);max-width:190px;max-height:190px;min-width:120px;min-height:120px;border-radius:50%;background:repeating-radial-gradient(circle,#262522 0 2px,#393631 3px 5px,#201f1d 6px 8px);box-shadow:0 9px 22px #30261d26;position:relative;cursor:pointer;animation:spin 5s linear infinite;animation-play-state:paused}.vinyl:before{content:"";position:absolute;inset:35%;border-radius:50%;background:radial-gradient(circle,#f1dfc8 0 3px,#c6a47e 4px 24px,#e9d4b8 25px 100%);border:1px solid #b7956f}.vinyl:after{content:"";position:absolute;inset:12px;border-radius:50%;border:1px solid #ffffff17}.vinyl.playing{animation-play-state:running}.hint{text-align:center;color:var(--muted);font-size:10px;margin-bottom:5px}.details{display:none}.details.show{display:block}.vinylmode .info{display:none}.vinylmode .details.show .info{display:flex;margin-top:7px}.vinylmode .details.show .controls{margin-top:10px}.vinylmode .details.show .list{margin-top:10px}
+@keyframes spin{to{transform:rotate(360deg)}}@media(max-width:300px){.card{padding:10px}.cover{width:58px;height:58px;flex-basis:58px}.mini-disc{width:43px;height:43px}.mini-disc:after{inset:15px}}
+</style></head>
+<body><div class="wrap"><main class="card" id="card">
+<div class="head"><div class="tag">CREAM · AUDIO</div><button class="mode" id="mode" type="button">切换模板</button></div>
+<div class="vinylstage" id="vinylstage" hidden><div class="vinyl" id="vinyl" role="button" tabindex="0" aria-label="点击显示歌曲信息"></div></div>
+<div class="hint" id="hint" hidden>轻触黑胶，查看歌曲信息与播放模式</div>
+<div class="info"><div class="cover" id="cover"><div class="mini-disc"></div></div><div class="meta"><div class="title" id="title">午后慢慢听</div><div class="artist" id="artist">Cream Audio Player</div></div></div>
+<section class="details" id="details">
+<div class="controls"><button class="play" id="play" aria-label="播放">▶</button><div class="timeline"><input id="seek" type="range" min="0" max="100" value="0" aria-label="播放进度"><div class="times"><span id="current">0:00</span><span id="duration">0:00</span></div></div><button class="loop on" id="loop" title="单曲循环开关">↻</button></div>
+<div class="list" id="list"></div>
+</section>
+</main></div><audio id="audio" preload="metadata"></audio>
+<script>
+(()=>{const $=id=>document.getElementById(id),audio=$('audio');let cfg={style:'cream',mode:'single',loop:true,songs:[]},idx=0,loop=true,expanded=false;
+function decode(){try{const raw=new URLSearchParams(location.search).get('data');if(raw){let s=raw.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';cfg=JSON.parse(decodeURIComponent(escape(atob(s))))}}catch(e){}}
+const fmt=n=>Number.isFinite(n)&&n>=0?Math.floor(n/60)+':'+String(Math.floor(n%60)).padStart(2,'0'):'0:00';
+function setStyle(){let vinyl=cfg.style==='vinyl';$('card').classList.toggle('vinylmode',vinyl);$('vinylstage').hidden=!vinyl;$('hint').hidden=!vinyl;$('cover').style.display=vinyl?'none':'grid';$('mode').textContent=vinyl?'黑胶款':'简约款';$('info').style.display='';if(vinyl){$('details').classList.toggle('show',expanded)}else $('details').classList.add('show')}
+function render(){let s=cfg.songs[idx]||{};$('title').textContent=s.title||'未命名歌曲';$('artist').textContent=s.artist||'未知作者';$('play').textContent=audio.paused?'▶':'Ⅱ';$('cover').classList.toggle('spin',!audio.paused);$('vinyl').classList.toggle('playing',!audio.paused);$('loop').classList.toggle('on',loop);$('loop').title=loop?'单曲循环：开启':'单曲循环：关闭';$('list').innerHTML='';
+if(cfg.mode==='playlist'){cfg.songs.forEach((song,i)=>{let row=document.createElement('div');row.className='track'+(i===idx?' active':'');let num=document.createElement('span');num.className='num';num.textContent=String(i+1).padStart(2,'0');let text=document.createElement('span');text.className='tracktext';text.textContent=song.title||'未命名歌曲';let small=document.createElement('small');small.textContent=song.artist||'';text.appendChild(small);let mark=document.createElement('span');mark.className='trackmark';mark.textContent=i===idx?'♪':'·';row.append(num,text,mark);row.onclick=()=>load(i,true);$('list').appendChild(row)})}
+setStyle();syncTime()}
+function syncTime(){let d=audio.duration||0,c=audio.currentTime||0;$('seek').value=d?c/d*100:0;$('current').textContent=fmt(c);$('duration').textContent=fmt(d)}
+function load(i,play){if(!cfg.songs.length)return;idx=(i+cfg.songs.length)%cfg.songs.length;audio.src=cfg.songs[idx].url;audio.loop=loop;render();if(play)audio.play().catch(()=>{})}
+function toggle(){if(!cfg.songs.length)return;if(audio.paused)audio.play().catch(()=>{});else audio.pause()}
+decode();loop=cfg.loop!==false;
+cfg.songs=(Array.isArray(cfg.songs)?cfg.songs:[]).filter(s=>s&&/^https?:/i.test(s.url||''));
+if(cfg.style!=='vinyl')cfg.style='cream';if(cfg.mode!=='playlist')cfg.mode='single';
+$('mode').onclick=()=>{cfg.style=cfg.style==='cream'?'vinyl':'cream';render()};
+$('vinyl').onclick=()=>{expanded=!expanded;render()};$('vinyl').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('vinyl').click()}};
+$('play').onclick=toggle;$('loop').onclick=()=>{loop=!loop;audio.loop=loop;render()};$('seek').oninput=e=>{if(audio.duration)audio.currentTime=+e.target.value/100*audio.duration};
+audio.addEventListener('play',render);audio.addEventListener('pause',render);audio.addEventListener('timeupdate',syncTime);audio.addEventListener('loadedmetadata',syncTime);audio.addEventListener('ended',()=>{if(loop){audio.currentTime=0;audio.play().catch(()=>{})}else if(idx<cfg.songs.length-1)load(idx+1,true)});
+if(cfg.songs.length)load(0,false);else render();
+})();
+</script></body></html>
